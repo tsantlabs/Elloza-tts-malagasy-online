@@ -1,0 +1,88 @@
+{
+    "version": "1.0",
+    "truncation": null,
+    "padding": null,
+    "added_tokens": [
+        {
+            "id": 30,
+            "content": "<unk>",
+            "single_word": false,
+            "lstrip": false,
+            "rstrip": false,
+            "normalized": false,
+            "special": true
+        }
+    ],
+    "normalizer": {
+        "type": "Sequence",
+        "normalizers": [
+            {
+                "type": "Lowercase"
+            },
+            {
+                "type": "Replace",
+                "pattern": {
+                    "Regex": "[^a|niyortmehskfzdl'vpbj\\-g\u00e0\u1ef3\u00f4\u00f2\u00ec ]"
+                },
+                "content": ""
+            },
+            {
+                "type": "Strip",
+                "strip_left": true,
+                "strip_right": true
+            },
+            {
+                "type": "Replace",
+                "pattern": {
+                    "Regex": "(?=.)|(?<!^)$"
+                },
+                "content": "a"
+            }
+        ]
+    },
+    "pre_tokenizer": {
+        "type": "Split",
+        "pattern": {
+            "Regex": ""
+        },
+        "behavior": "Isolated",
+        "invert": false
+    },
+    "post_processor": null,
+    "decoder": null,
+    "model": {
+        "vocab": {
+            "a": 0,
+            "|": 1,
+            "n": 2,
+            "i": 3,
+            "y": 4,
+            "o": 5,
+            "r": 6,
+            "t": 7,
+            "m": 8,
+            "e": 9,
+            "h": 10,
+            "s": 11,
+            "k": 12,
+            "f": 13,
+            "z": 14,
+            "d": 15,
+            "l": 16,
+            "'": 17,
+            "v": 18,
+            "p": 19,
+            "b": 20,
+            "j": 21,
+            "-": 22,
+            "g": 23,
+            "\u00e0": 24,
+            "\u1ef3": 25,
+            "\u00f4": 26,
+            "\u00f2": 27,
+            "\u00ec": 28,
+            " ": 29,
+            "<unk>": 30
+        }
+    }
+}
