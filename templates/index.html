@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Voice Generator</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        font-family: "Inter", sans-serif;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 100vh;
+        padding: 2rem;
+        background: linear-gradient(to bottom, #ffffff 30%, #f0f0ff 100%);
+      }
+      h1 {
+        font-size: 2.5rem;
+        color: #4f46e5;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        font-size: 1.2rem;
+        color: #333;
+        margin-bottom: 2rem;
+      }
+      .tab-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .tab-button {
+        padding: 0.5rem 1.5rem;
+        border-radius: 6px;
+        border: none;
+        background: #f1f1f1;
+        color: #333;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tab-button.active {
+        background: #4f46e5;
+        color: white;
+      }
+      .card {
+        background: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      textarea {
+        width: 100%;
+        height: 100px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        padding: 0.75rem;
+        font-size: 1rem;
+      }
+      .generate-button {
+        padding: 0.75rem;
+        background: #7c3aed;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      .audio-preview {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: #f9f9f9;
+        padding: 1rem;
+        border-radius: 8px;
+        justify-content: space-between;
+      }
+      .hidden {
+        display: none;
+      }
+      .download-button {
+        background: #4f46e5;
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .generate-button.loading {
+        background: #a78bfa;
+        cursor: not-allowed;
+        position: relative;
+      }
+
+      .generate-button.loading::after {
+        content: "";
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        width: 16px;
+        height: 16px;
+        margin-top: -8px;
+        border: 2px solid white;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>AI Voice Generator</h1>
+    <p>Transform your text into natural-sounding speech with AI technology</p>
+
+    <div class="tab-buttons">
+      <button class="tab-button active" onclick="showTab('text')">
+        Text to Speech
+      </button>
+      <button class="tab-button" onclick="showTab('file')">
+        File to Speech
+      </button>
+    </div>
+
+    <!-- Text Tab -->
+    <div id="text-tab" class="card">
+      <textarea placeholder="Enter your text here..."></textarea>
+      <button class="generate-button" onclick="generateAudio()">
+        Generate Audio
+      </button>
+      <div class="audio-preview hidden" id="audio-section-text">
+        <audio controls id="audio-text"></audio>
+        <a id="download-link-text" href="/audio" class="download-button"
+          >Download</a
+        >
+      </div>
+    </div>
+
+    <!-- File Tab -->
+    <div id="file-tab" class="card hidden">
+      <input type="file" accept=".txt,.docx" />
+      <button class="generate-button" onclick="generateAudioFromFile()">
+        Generate Audio
+      </button>
+      <div class="audio-preview hidden" id="audio-section-file">
+        <audio controls id="audio-file"></audio>
+        <a id="download-link-file" href="/audio" class="download-button"
+          >Download</a
+        >
+      </div>
+    </div>
+
+    <script>
+      function showTab(tab) {
+        document
+          .getElementById("text-tab")
+          .classList.toggle("hidden", tab !== "text");
+        document
+          .getElementById("file-tab")
+          .classList.toggle("hidden", tab !== "file");
+
+        document
+          .querySelectorAll(".tab-button")
+          .forEach((btn) => btn.classList.remove("active"));
+        document
+          .querySelector(`.tab-button[onclick="showTab('${tab}')"]`)
+          .classList.add("active");
+      }
+
+      function generateAudio() {
+        const text = document.querySelector("#text-tab textarea").value;
+        const button = document.querySelector("#text-tab .generate-button");
+
+        if (!text.trim()) {
+          alert("Veuillez entrer un texte.");
+          return;
+        }
+
+        button.disabled = true;
+        button.classList.add("loading");
+        button.textContent = "Génération en cours...";
+
+        fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `text=${encodeURIComponent(text)}`,
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              const timestamp = new Date().getTime();
+              const audioEl = document.getElementById("audio-text");
+              const downloadLink =
+                document.getElementById("download-link-text");
+              const audioSection =
+                document.getElementById("audio-section-text");
+
+              audioEl.src = "/audio?" + timestamp;
+              downloadLink.href = "/audio?" + timestamp;
+              audioSection.classList.remove("hidden");
+            } else {
+              alert("Erreur : " + data.error);
+            }
+          })
+          .catch((err) => {
+            alert("Erreur de connexion au serveur.");
+            console.error(err);
+          })
+          .finally(() => {
+            button.disabled = false;
+            button.classList.remove("loading");
+            button.textContent = "Generate Audio";
+          });
+      }
+
+      function generateAudioFromFile() {
+        const fileInput = document.querySelector(
+          '#file-tab input[type="file"]'
+        );
+        const file = fileInput.files[0];
+        const button = document.querySelector("#file-tab .generate-button");
+
+        if (!file) {
+          alert("Aucun fichier sélectionné.");
+          return;
+        }
+
+        button.disabled = true;
+        button.classList.add("loading");
+        button.textContent = "Génération en cours...";
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/generate-from-file", {
+          method: "POST",
+          body: formData,
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              const timestamp = new Date().getTime();
+              const audioEl = document.getElementById("audio-file");
+              const downloadLink =
+                document.getElementById("download-link-file");
+              const audioSection =
+                document.getElementById("audio-section-file");
+
+              audioEl.src = "/audio?" + timestamp;
+              downloadLink.href = "/audio?" + timestamp;
+              audioSection.classList.remove("hidden");
+            } else {
+              alert("Erreur : " + data.error);
+            }
+          })
+          .catch((err) => {
+            alert("Erreur de connexion au serveur.");
+            console.error(err);
+          })
+          .finally(() => {
+            button.disabled = false;
+            button.classList.remove("loading");
+            button.textContent = "Generate Audio";
+          });
+      }
+    </script>
+  </body>
+</html>
